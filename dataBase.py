@@ -39,3 +39,12 @@ class DB:
         self.cursor.execute(f"insert into wallets (wallet_owner) values ({id})")
         self.connection.commit()
         self.connection.close()
+
+    def getWalletBuyUserId(self, id):
+        import sqlite3
+        self.connection = sqlite3.connect(self.dbName)
+        self.cursor = self.connection.cursor()
+        self.cursor.execute(f"select * from wallets where wallet_owner = {id}")
+        result = self.cursor.fetchone()
+        self.connection.close()
+        return result
