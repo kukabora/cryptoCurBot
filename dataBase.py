@@ -15,11 +15,11 @@ class DB:
         self.connection.close()
         return result
 
-    def createNewUser(self, id):
+    def createNewUser(self, id, username):
         import sqlite3
         self.connection = sqlite3.connect(self.dbName)
         self.cursor = self.connection.cursor()
-        self.cursor.execute(f"insert into users (id) values ({id})")
+        self.cursor.execute(f"insert into users (id, username) values ({id}, '{username}')")
         self.connection.commit()
         self.connection.close()
 

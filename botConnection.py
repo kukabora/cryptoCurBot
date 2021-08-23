@@ -19,7 +19,7 @@ dp = Dispatcher(bot)
 @dp.callback_query_handler(lambda c: c.data == 'start' or c.data == "backToMenu") 
 async def process_callback_button1(callback_query: types.CallbackQuery):
     if (not len(db.findUserById(callback_query.from_user.id))):
-        db.createNewUser(str(callback_query.from_user.id))
+        db.createNewUser(str(callback_query.from_user.id), str(callback_query.from_user.username))
         db.createNewWallet(str(callback_query.from_user.id))
     await bot.answer_callback_query(callback_query.id)
     await bot.edit_message_text(chat_id=callback_query.message.chat.id, message_id=callback_query.message.message_id, text="С чего начнём?", reply_markup=kb.inline_kb2)
