@@ -1,22 +1,20 @@
+import sqlite3
 class DB:
-    import sqlite3
 
     dbName = 'database.db'
 
     def __init__(self):
         pass
 
-    def getFirstRow(self, tableName):
-        import sqlite3
+    def getBotToken(self):
         self.connection = sqlite3.connect(self.dbName)
         self.cursor = self.connection.cursor()
-        self.cursor.execute(f"select * from {tableName}")
+        self.cursor.execute(f"select * from tokens")
         result = self.cursor.fetchone()[1]
         self.connection.close()
         return result
 
     def createNewUser(self, id, username):
-        import sqlite3
         self.connection = sqlite3.connect(self.dbName)
         self.cursor = self.connection.cursor()
         self.cursor.execute(f"insert into users (id, username) values ({id}, '{username}')")
@@ -24,7 +22,6 @@ class DB:
         self.connection.close()
 
     def findUserById(self, id):
-        import sqlite3
         self.connection = sqlite3.connect(self.dbName)
         self.cursor = self.connection.cursor()
         self.cursor.execute(f"select * from users where id = {id}")
@@ -33,7 +30,6 @@ class DB:
         return result
 
     def createNewWallet(self, id):
-        import sqlite3
         self.connection = sqlite3.connect(self.dbName)
         self.cursor = self.connection.cursor()
         self.cursor.execute(f"insert into wallets (wallet_owner) values ({id})")
@@ -41,10 +37,23 @@ class DB:
         self.connection.close()
 
     def getWalletBuyUserId(self, id):
-        import sqlite3
         self.connection = sqlite3.connect(self.dbName)
         self.cursor = self.connection.cursor()
         self.cursor.execute(f"select * from wallets where wallet_owner = {id}")
         result = self.cursor.fetchone()
         self.connection.close()
         return result
+
+    def checkIsTokenOwner(self, id):
+        self.connection = sqlite3.connect(self.dbName)
+        self.cursor = self.connection.cursor()
+        self.cursor.execute(f"select token_owner from users where id = {id}")
+        result = self.cursor.fetchone()
+        self.connection.close()
+        return result[0]
+
+# db = DB()
+# if db.checkIsTokenOwner(505350250):
+#     print("owner")
+# else:
+#     print("not owner")
