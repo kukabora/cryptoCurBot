@@ -51,9 +51,21 @@ class DB:
         result = self.cursor.fetchone()
         self.connection.close()
         return result[0]
+    
+    def getCurrentAmountOfCurrencyByUserId(self, currency, id):
+        self.connection = sqlite3.connect(self.dbName)
+        self.cursor = self.connection.cursor()
+        self.cursor.execute(f"select {currency} from wallets where wallet_owner = {id}")
+        result = self.cursor.fetchone()
+        self.connection.close()
+        return result[0]
 
-# db = DB()
-# if db.checkIsTokenOwner(505350250):
-#     print("owner")
-# else:
-#     print("not owner")
+    def updateWalletAmountOf(self, currency, value, id):
+        previousAmount = self.getCurrentAmountOfCurrencyByUserId(currency, id)
+        newAmount = previousAmount + value
+        self.connection = sqlite3.connect(self.dbName)
+        self.cursor = self.connection.cursor()
+        self.cursor.execute(f"update wallets set {currency} = {newAmount} where wallet_owner = {id}")
+        self.connection.commit()
+        self.connection.close()
+

@@ -66,18 +66,21 @@ async def process_callback_button1(callback_query: types.CallbackQuery):
         cabinetKB.add(kb.inline_btn_8)
     await bot.edit_message_text(chat_id=callback_query.message.chat.id, message_id=callback_query.message.message_id, text=
     f"""
-    Ваш баланс составляет:
+    *Ваш баланс составляет:*
+
+
     🐥Бабанокоин: ({balance[2]})
     Мнепохуйтокен: ({balance[3]})
     💰Гослингкоин: ({balance[4]})
-    РэдДублон: ({balance[5]})
-    Попакоин: ({balance[6]})
-    👾Душнилатокин: ({balance[7]})
-    🕷паааакоин): ({balance[8]})
-    💊Туринариум: ({balance[9]})
-    Чак-Чак: ({balance[10]})
-    🦽ДохлаяМонета: ({balance[11]})
-    """, reply_markup=kb.cabinetKB)
+    Попакоин: ({balance[5]})
+    👾Душнилатокин: ({balance[6]})
+    🕷паааакоин): ({balance[7]})
+    💊Туринариум: ({balance[8]})
+    Чак-Чак: ({balance[9]})
+    🦽ДохлаяМонета: ({balance[10]})
+
+    В общей сложности это составляет 0 Кекекоинов.
+    """, parse_mode="Markdown", reply_markup=cabinetKB)
 
 ###Команды
 @dp.message_handler(commands=['start'])
