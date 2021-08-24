@@ -69,3 +69,11 @@ class DB:
         self.connection.commit()
         self.connection.close()
 
+    def getAllCtyprosNamesAndEmojis(self):
+        self.connection = sqlite3.connect(self.dbName)
+        self.cursor = self.connection.cursor()
+        self.cursor.execute("select name, smile from cryptos")
+        result = self.cursor.fetchall()
+        self.connection.close()
+        return result
+

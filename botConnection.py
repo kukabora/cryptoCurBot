@@ -55,7 +55,6 @@ async def process_callback_button1(callback_query: types.CallbackQuery):
 async def process_callback_button1(callback_query: types.CallbackQuery):
     print(f"User {callback_query.from_user.username} is checking his balance.")
     await bot.answer_callback_query(callback_query.id)
-    balance = db.getWalletBuyUserId(callback_query.from_user.id)
     inline_btn_5 = InlineKeyboardButton('Мой баланс', callback_data='balance')
     inline_btn_6 = InlineKeyboardButton('Мой магазин', callback_data='storeSettings')
     cabinetKB = InlineKeyboardMarkup(row_width=3).add(inline_btn_5, inline_btn_6)
@@ -64,23 +63,21 @@ async def process_callback_button1(callback_query: types.CallbackQuery):
         cabinetKB.add(inline_btn_7, kb.inline_btn_8)
     else:
         cabinetKB.add(kb.inline_btn_8)
+    coins = db.getAllCtyprosNamesAndEmojis()
+    balanceData = ""
+    for coin in coins:
+        balanceData += coin[1] + coin[0] + ": " + str(db.getCurrentAmountOfCurrencyByUserId(coin[0], callback_query.from_user.id)) + "\n"
     await bot.edit_message_text(chat_id=callback_query.message.chat.id, message_id=callback_query.message.message_id, text=
     f"""
-    *Ваш баланс составляет:*
+    <b>Ваш баланс составляет:</b>
+    <b>______________________</b>
 
-
-    🐥Бабанокоин: ({balance[2]})
-    Мнепохуйтокен: ({balance[3]})
-    💰Гослингкоин: ({balance[4]})
-    Попакоин: ({balance[5]})
-    👾Душнилатокин: ({balance[6]})
-    🕷паааакоин): ({balance[7]})
-    💊Туринариум: ({balance[8]})
-    Чак-Чак: ({balance[9]})
-    🦽ДохлаяМонета: ({balance[10]})
+    
+{balanceData}
+    
 
     В общей сложности это составляет 0 Кекекоинов.
-    """, parse_mode="Markdown", reply_markup=cabinetKB)
+    """, parse_mode="html", reply_markup=cabinetKB)
 
 ###Команды
 @dp.message_handler(commands=['start'])
