@@ -24,19 +24,8 @@ buyKB = InlineKeyboardMarkup().add(inline_btn_9, inline_btn_10, inline_btn_11, i
 buyKB.row(inline_btn_8)
 
 
-# inline_btn_19 = InlineKeyboardButton('Бабанокоин', callback_data='babanoTrade1')
-# inline_btn_20 = InlineKeyboardButton('Мнепохуйтокен', callback_data='mnepohuiTrade1')
-# inline_btn_21 = InlineKeyboardButton('Гослингкоин', callback_data='goslingTrade1')
-# inline_btn_22 = InlineKeyboardButton('Рэддублон', callback_data='redTrade1')
-# inline_btn_23 = InlineKeyboardButton('Попакоин', callback_data='popaTrade1')
-# inline_btn_24 = InlineKeyboardButton('Душнилатокин', callback_data='dushnilaTrade1')
-# inline_btn_25 = InlineKeyboardButton('паааакоин)', callback_data='paaaTrade1')
-# inline_btn_26 = InlineKeyboardButton('Туринариум', callback_data='turinaTrade1')
-# inline_btn_27 = InlineKeyboardButton('Чак-Чак', callback_data='chakTrade1')
-# inline_btn_28 = InlineKeyboardButton('Дохлаямонета', callback_data='dohlayaTrade1')
-# trade1KB = InlineKeyboardMarkup().add(inline_btn_19, inline_btn_20, inline_btn_21, inline_btn_22, inline_btn_23, inline_btn_24, inline_btn_25, inline_btn_26, inline_btn_27, inline_btn_28)
-# trade1KB.row(inline_btn_8)
 
 
-testBtn = InlineKeyboardButton('штош)', callback_data='test')
+
+testBtn = InlineKeyboardButton('штош)', callback_data='start')
 testKB = InlineKeyboardMarkup().add(testBtn)

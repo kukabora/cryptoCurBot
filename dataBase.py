@@ -77,3 +77,18 @@ class DB:
         self.connection.close()
         return result
 
+    def getTokenInfoByOwnerId(self, id):
+        self.connection = sqlite3.connect(self.dbName)
+        self.cursor = self.connection.cursor()
+        self.cursor.execute(f"select * from cryptos where ownerId = {id}")
+        result = self.cursor.fetchone()
+        self.connection.close()
+        return result
+
+    def getCurrenciesOwnerIDsRating(self):
+        self.connection = sqlite3.connect(self.dbName)
+        self.cursor = self.connection.cursor()
+        self.cursor.execute(f"select ownerId from cryptos order by kekPrice ASC")
+        result = [ownerId[0] for ownerId in self.cursor.fetchall()]
+        self.connection.close()
+        return result

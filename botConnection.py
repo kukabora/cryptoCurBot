@@ -51,6 +51,32 @@ async def process_callback_button1(callback_query: types.CallbackQuery):
     await bot.answer_callback_query(callback_query.id)
     await bot.edit_message_text(chat_id=callback_query.message.chat.id, message_id=callback_query.message.message_id, text=f"Нинада ломать бота я вижу тебя, {callback_query.from_user.username}", reply_markup=kb.testKB)
 
+@dp.callback_query_handler(lambda c: c.data == 'myToken')
+async def process_callback_button1(callback_query: types.CallbackQuery):
+    print(f"User {callback_query.from_user.username} is looking at his token.")
+    await bot.answer_callback_query(callback_query.id)
+    inline_btn_5 = InlineKeyboardButton('Мой баланс', callback_data='balance')
+    inline_btn_6 = InlineKeyboardButton('Мой магазин', callback_data='storeSettings')
+    cabinetKB = InlineKeyboardMarkup(row_width=3).add(inline_btn_5, inline_btn_6)
+    if db.checkIsTokenOwner(callback_query.from_user.id):
+        inline_btn_7 = InlineKeyboardButton('Моя монетa', callback_data='myToken')
+        cabinetKB.add(inline_btn_7, kb.inline_btn_8)
+    else:
+        cabinetKB.add(kb.inline_btn_8)
+    await bot.delete_message(callback_query.message.chat.id, callback_query.message.message_id)
+    tokenInfo = db.getTokenInfoByOwnerId(callback_query.from_user.id)
+    rating = db.getCurrenciesOwnerIDsRating().index(callback_query.from_user.id)+2
+    information = f"""
+<b>Вся информация по вашему личному токену.</b>
+
+
+<b>Название:</b> {tokenInfo[5]} {tokenInfo[1]}
+<b>Эквивалент в кекекоинах:</b> {tokenInfo[2]}
+<b>Количество транзакций за сегодня:</b> {tokenInfo[3]}
+<b>Место в рейтинге самых дорогих монет:</b> {rating}
+    """
+    await bot.send_photo(callback_query.message.chat.id, photo=open(tokenInfo[6], 'rb'), caption=information, parse_mode="html", reply_markup=cabinetKB)
+
 @dp.callback_query_handler(lambda c: c.data == 'balance')
 async def process_callback_button1(callback_query: types.CallbackQuery):
     print(f"User {callback_query.from_user.username} is checking his balance.")
@@ -72,7 +98,7 @@ async def process_callback_button1(callback_query: types.CallbackQuery):
     <b>Ваш баланс составляет:</b>
     <b>______________________</b>
 
-    
+
 {balanceData}
     
 
