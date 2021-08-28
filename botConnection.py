@@ -3,6 +3,7 @@ from dataBase import DB
 import keyboards as kb
 from aiogram.types import KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram import Bot, Dispatcher, executor, types
+import re
 
 db = DB()
 
@@ -17,6 +18,18 @@ dp = Dispatcher(bot)
 
 ###Кнопки
 
+@dp.callback_query_handler(lambda c: c.data == 'addGood') 
+async def process_callback_button1(callback_query: types.CallbackQuery):
+    print(f"User {callback_query.from_user.username} is setting his store.")
+    await bot.delete_message(callback_query.message.chat.id, callback_query.message.message_id)
+    await bot.answer_callback_query(callback_query.id)
+    
+    await bot.send_message(chat_id=callback_query.message.chat.id, text=f"""
+    <b>Дневная выручка</b>: {totalAmount}
+    <b>Количество покупок</b>: {len(storeTransactions)}
+    <b>Количество товаров</b>:  {len(goods)}
+    <b>Место по транзакциям</b>: {currencyTransactionRank}
+    """,  parse_mode="html", reply_markup=kb.storeSettings)
 
 @dp.callback_query_handler(lambda c: c.data == 'storeSettings') 
 async def process_callback_button1(callback_query: types.CallbackQuery):

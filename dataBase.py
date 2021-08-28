@@ -116,3 +116,31 @@ class DB:
         result = [ownerId[0] for ownerId in self.cursor.fetchall()]
         self.connection.close()
         return result
+
+    def createNewGood(self, name, price, currency, ownerId):
+        self.connection = sqlite3.connect(self.dbName)
+        self.cursor = self.connection.cursor()
+        self.cursor.execute(f"insert into goods (name, price, currency, ownerId) VALUES ('{name}', {price}, {currency}, {ownerId})")
+        self.connection.commit()
+        self.connection.close()
+    
+    def getCryptoNameById(self, id):
+        self.connection = sqlite3.connect(self.dbName)
+        self.cursor = self.connection.cursor()
+        self.cursor.execute(f"select name from cryptos where id = {id}")
+        result = self.cursor.fetchone()
+        self.connection.close()
+        return result[0]
+
+    def createNewTransaction(self, senderId, recieverId, currencyId, fromStore, amount):
+        self.connection = sqlite3.connect(self.dbName)
+        self.cursor = self.connection.cursor()
+        self.cursor.execute(f"insert into transactions (senderId, recieverId, currencyId, fromStore, amount) VALUES ({senderId}, {recieverId}, {currencyId}, {fromStore}, {amount})")
+        self.connection.commit()
+        currencyName = self.getCryptoNameById(currencyId)
+        self.updateWalletAmountOf(currencyName, -amount, senderId)
+        self.connection.commit()
+        self.updateWalletAmountOf(currencyName, amount, id)
+        self.connection.commit()
+        self.connection.close()
+
