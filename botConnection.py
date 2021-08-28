@@ -22,12 +22,14 @@ async def process_callback_button1(callback_query: types.CallbackQuery):
     if (not len(db.findUserById(callback_query.from_user.id))):
         db.createNewUser(str(callback_query.from_user.id), str(callback_query.from_user.username))
         db.createNewWallet(str(callback_query.from_user.id))
+    await bot.delete_message(callback_query.message.chat.id, callback_query.message.message_id)
     await bot.answer_callback_query(callback_query.id)
-    await bot.edit_message_text(chat_id=callback_query.message.chat.id, message_id=callback_query.message.message_id, text="С чего начнём?", reply_markup=kb.inline_kb2)
+    await bot.send_message(chat_id=callback_query.message.chat.id, text="С чего начнём?", reply_markup=kb.inline_kb2)
 
 @dp.callback_query_handler(lambda c: c.data == 'cabinet')
 async def process_callback_button1(callback_query: types.CallbackQuery):
     print(f"User {callback_query.from_user.username} entered cabinet.")
+    
     inline_btn_5 = InlineKeyboardButton('Мой баланс', callback_data='balance')
     inline_btn_6 = InlineKeyboardButton('Мой магазин', callback_data='storeSettings')
     cabinetKB = InlineKeyboardMarkup(row_width=3).add(inline_btn_5, inline_btn_6)
@@ -36,20 +38,23 @@ async def process_callback_button1(callback_query: types.CallbackQuery):
         cabinetKB.add(inline_btn_7, kb.inline_btn_8)
     else:
         cabinetKB.add(kb.inline_btn_8)
+    await bot.delete_message(callback_query.message.chat.id, callback_query.message.message_id)
     await bot.answer_callback_query(callback_query.id)
-    await bot.edit_message_text(chat_id=callback_query.message.chat.id, message_id=callback_query.message.message_id, text="Добро пожаловать в ваш личный кабинет", reply_markup=cabinetKB)
+    await bot.send_message(chat_id=callback_query.message.chat.id, text="Добро пожаловать в ваш личный кабинет", reply_markup=cabinetKB)
 
 @dp.callback_query_handler(lambda c: c.data == 'store')
 async def process_callback_button1(callback_query: types.CallbackQuery):
     print(f"User {callback_query.from_user.username} entered store.")
+    await bot.delete_message(callback_query.message.chat.id, callback_query.message.message_id)
     await bot.answer_callback_query(callback_query.id)
-    await bot.edit_message_text(chat_id=callback_query.message.chat.id, message_id=callback_query.message.message_id, text=f"Нинада ломать бота я вижу тебя, {callback_query.from_user.username}", reply_markup=kb.testKB)
+    await bot.send_message(chat_id=callback_query.message.chat.id, text=f"Нинада ломать бота я вижу тебя, {callback_query.from_user.username}", reply_markup=kb.testKB)
 
 @dp.callback_query_handler(lambda c: c.data == 'tradeBtn')
 async def process_callback_button1(callback_query: types.CallbackQuery):
     print(f"User {callback_query.from_user.username} entered exchange section.")
+    await bot.delete_message(callback_query.message.chat.id, callback_query.message.message_id)
     await bot.answer_callback_query(callback_query.id)
-    await bot.edit_message_text(chat_id=callback_query.message.chat.id, message_id=callback_query.message.message_id, text=f"Нинада ломать бота я вижу тебя, {callback_query.from_user.username}", reply_markup=kb.testKB)
+    await bot.send_message(chat_id=callback_query.message.chat.id, text=f"Нинада ломать бота я вижу тебя, {callback_query.from_user.username}", reply_markup=kb.testKB)
 
 @dp.callback_query_handler(lambda c: c.data == 'myToken')
 async def process_callback_button1(callback_query: types.CallbackQuery):
@@ -89,11 +94,12 @@ async def process_callback_button1(callback_query: types.CallbackQuery):
         cabinetKB.add(inline_btn_7, kb.inline_btn_8)
     else:
         cabinetKB.add(kb.inline_btn_8)
+    await bot.delete_message(callback_query.message.chat.id, callback_query.message.message_id)
     coins = db.getAllCtyprosNamesAndEmojis()
     balanceData = ""
     for coin in coins:
         balanceData += coin[1] + coin[0] + ": " + str(db.getCurrentAmountOfCurrencyByUserId(coin[0], callback_query.from_user.id)) + "\n"
-    await bot.edit_message_text(chat_id=callback_query.message.chat.id, message_id=callback_query.message.message_id, text=
+    await bot.send_message(chat_id=callback_query.message.chat.id, text=
     f"""
     <b>Ваш баланс составляет:</b>
     <b>______________________</b>
