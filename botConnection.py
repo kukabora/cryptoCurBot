@@ -23,11 +23,16 @@ async def process_callback_button1(callback_query: types.CallbackQuery):
     print(f"User {callback_query.from_user.username} is setting his store.")
     await bot.delete_message(callback_query.message.chat.id, callback_query.message.message_id)
     await bot.answer_callback_query(callback_query.id)
-    await bot.send_message(chat_id=callback_query.message.chat.id, text="""
-    <b>Дневная выручка</b>: 
-    <b>Количество покупок</b>:
-    <b>Количество товаров</b>:
-    <b>Место по транзакциям</b>:
+    tokenInfo = db.getTokenInfoByOwnerId(callback_query.from_user.id)
+    storeTransactions = db.getAllStoreTransactionsByID(callback_query.from_user.id)
+    goods = db.getAllStoreGoodsByID(callback_query.from_user.id)
+    currencyTransactionRank = db.getCurrencyTransactionRating().index(callback_query.from_user.id)
+    totalAmount = [ transaction[5] for transaction in storeTransactions].sum()
+    await bot.send_message(chat_id=callback_query.message.chat.id, text=f"""
+    <b>Дневная выручка</b>: {totalAmount}
+    <b>Количество покупок</b>: {len(storeTransactions)}
+    <b>Количество товаров</b>:  {len(goods)}
+    <b>Место по транзакциям</b>: {currencyTransactionRank}
     """,  parse_mode="html", reply_markup=kb.storeSettings)
 
 @dp.callback_query_handler(lambda c: c.data == 'start' or c.data == "backToMenu") 

@@ -92,3 +92,27 @@ class DB:
         result = [ownerId[0] for ownerId in self.cursor.fetchall()]
         self.connection.close()
         return result
+
+    def getAllStoreTransactionsByID(self, id):
+        self.connection = sqlite3.connect(self.dbName)
+        self.cursor = self.connection.cursor()
+        self.cursor.execute(f"select * from transactions where recieverId = {id} AND fromStore = 1")
+        result = self.cursor.fetchall()
+        self.connection.close()
+        return result
+
+    def getAllStoreGoodsByID(self, id):
+        self.connection = sqlite3.connect(self.dbName)
+        self.cursor = self.connection.cursor()
+        self.cursor.execute(f"select * from goods where ownerId = {id}")
+        result = self.cursor.fetchall()
+        self.connection.close()
+        return result
+    
+    def getCurrencyTransactionRating(self):
+        self.connection = sqlite3.connect(self.dbName)
+        self.cursor = self.connection.cursor()
+        self.cursor.execute(f"select ownerId from cryptos order by kekPrice ASC")
+        result = [ownerId[0] for ownerId in self.cursor.fetchall()]
+        self.connection.close()
+        return result
