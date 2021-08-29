@@ -22,19 +22,31 @@ dp.middleware.setup(LoggingMiddleware())
 
 TestStates = States()
 ###Хэндлеры состояний
+@dp.message_handler(state=TestStates.all()[2])
+async def process_setstate_command(message: types.Message):
+    state = dp.current_state(user=message.from_user.id)
+    db.updateGoodInfo(message.from_user.id, "description", f"'{message.text}'")
+    await state.reset_state()
+    await message.answer(f"Товар успешно добавлен!",  reply_markup=kb.storeSettings)
+
 @dp.message_handler(state=TestStates.all()[1])
 async def process_setstate_command(message: types.Message):
-    db.updateGoodInfo(message.from_user.id, "name", f"'{message.text}'")
-    await state.set_state(TestStates.all()[1])
-    tokenInfo = db.getTokenInfoByOwnerId(message.from_user.id)
-    await message.reply(f"Отправьте, пожалуйста, цену товара в своей валюте (tokenInfo[1]):", reply=False)
+    state = dp.current_state(user=message.from_user.id)
+    if message.text.isdigit():
+        db.updateGoodInfo(message.from_user.id, "price", f"{message.text}")
+        await state.set_state(TestStates.all()[2])
+        tokenInfo = db.getTokenInfoByOwnerId(message.from_user.id)
+        await message.answer(f"В двух словах опишите ваш товар (максимум - 400 символов): ", reply=False)
+    else:
+        await message.answer(f"Цифрами блять напиши цену, что непонятного?", reply=False)
 
 @dp.message_handler(state=TestStates.all()[0])
 async def process_setstate_command(message: types.Message):
+    state = dp.current_state(user=message.from_user.id)
     db.updateGoodInfo(message.from_user.id, "name", f"'{message.text}'")
     await state.set_state(TestStates.all()[1])
     tokenInfo = db.getTokenInfoByOwnerId(message.from_user.id)
-    await message.reply(f"Отправьте, пожалуйста, цену товара в своей валюте (tokenInfo[1]):", reply=False)
+    await message.answer(f"Отправьте, пожалуйста, цену товара в своей валюте ({tokenInfo[1]}):", reply_markup=None)
 
 ###Кнопки
 
@@ -43,9 +55,10 @@ async def process_callback_button1(callback_query: types.CallbackQuery):
     print(f"User {callback_query.from_user.username} is setting his store.")
     await bot.delete_message(callback_query.message.chat.id, callback_query.message.message_id)
     await bot.answer_callback_query(callback_query.id)
-    db.addNewGood(callback_query.id)
+    db.addNewGood(callback_query.from_user.id)
+    state = dp.current_state(user=callback_query.from_user.id)
     await state.set_state(TestStates.all()[0])
-    await bot.send_message(chat_id=callback_query.message.chat.id, text="""<b>Отправьте, пожалуйста, название товара:</b>\n Внимание!\n Начав создавать товар, вы обязаны заполнить все поля до конца достоверной информацией. \n В противном случае карточка товара будет содержать всякую хуйню.""", parse_mode="html", reply_markup=kb.storeSettings)
+    await bot.send_message(chat_id=callback_query.message.chat.id, text="""<b>Отправьте, пожалуйста, название товара:</b>\n Внимание!\n Начав создавать товар, вы обязаны заполнить все поля до конца достоверной информацией. \n В противном случае карточка товара будет содержать всякую хуйню.""", parse_mode="html", reply_markup=None)
 
 @dp.callback_query_handler(lambda c: c.data == 'storeSettings') 
 async def process_callback_button1(callback_query: types.CallbackQuery):
@@ -56,7 +69,7 @@ async def process_callback_button1(callback_query: types.CallbackQuery):
     storeTransactions = db.getAllStoreTransactionsByID(callback_query.from_user.id)
     goods = db.getAllStoreGoodsByID(callback_query.from_user.id)
     currencyTransactionRank = db.getCurrencyTransactionRating().index(callback_query.from_user.id)
-    totalAmount = [ transaction[5] for transaction in storeTransactions].sum()
+    totalAmount = sum([ transaction[5] for transaction in storeTransactions])
     await bot.send_message(chat_id=callback_query.message.chat.id, text=f"""
     <b>Дневная выручка</b>: {totalAmount}
     <b>Количество покупок</b>: {len(storeTransactions)}

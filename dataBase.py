@@ -147,7 +147,7 @@ class DB:
     def getTheLastAddedGood(self, id):
         self.connection = sqlite3.connect(self.dbName)
         self.cursor = self.connection.cursor()
-        self.cursor.execute(f"select * from goods where ownerId = {id} order by id ASC")
+        self.cursor.execute(f"select * from goods where ownerId = {id} order by id DESC")
         result = self.cursor.fetchone()
         self.connection.close()
         return result
@@ -159,3 +159,8 @@ class DB:
         self.cursor.execute(f"update goods set {attr} = {value} where ownerId = {id} and id = {lastGoodId}")
         self.connection.commit()
         self.connection.close()
+
+
+
+# db = DB()
+# db.addNewGood(546535523)
