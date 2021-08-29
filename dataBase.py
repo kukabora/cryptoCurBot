@@ -116,13 +116,6 @@ class DB:
         result = [ownerId[0] for ownerId in self.cursor.fetchall()]
         self.connection.close()
         return result
-
-    def createNewGood(self, name, price, currency, ownerId):
-        self.connection = sqlite3.connect(self.dbName)
-        self.cursor = self.connection.cursor()
-        self.cursor.execute(f"insert into goods (name, price, currency, ownerId) VALUES ('{name}', {price}, {currency}, {ownerId})")
-        self.connection.commit()
-        self.connection.close()
     
     def getCryptoNameById(self, id):
         self.connection = sqlite3.connect(self.dbName)
@@ -144,3 +137,25 @@ class DB:
         self.connection.commit()
         self.connection.close()
 
+    def addNewGood(self, id):
+        cryptoData = self.getTokenInfoByOwnerId(id)
+        self.connection = sqlite3.connect(self.dbName)
+        self.cursor = self.connection.cursor()
+        self.cursor.execute(f"insert into goods (ownerId, currency) values ({id}, {cryptoData[0]})")
+        self.connection.commit()
+
+    def getTheLastAddedGood(self, id):
+        self.connection = sqlite3.connect(self.dbName)
+        self.cursor = self.connection.cursor()
+        self.cursor.execute(f"select * from goods where ownerId = {id} order by id ASC")
+        result = self.cursor.fetchone()
+        self.connection.close()
+        return result
+
+    def updateGoodInfo(self, id, attr, value):
+        lastGoodId = self.getTheLastAddedGood(id)[0]
+        self.connection = sqlite3.connect(self.dbName)
+        self.cursor = self.connection.cursor()
+        self.cursor.execute(f"update goods set {attr} = {value} where ownerId = {id} and id = {lastGoodId}")
+        self.connection.commit()
+        self.connection.close()
