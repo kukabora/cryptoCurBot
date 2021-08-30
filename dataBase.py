@@ -159,8 +159,14 @@ class DB:
         self.cursor.execute(f"update goods set {attr} = {value} where ownerId = {id} and id = {lastGoodId}")
         self.connection.commit()
         self.connection.close()
-
+    
+    def deleteGood(self, id):
+        self.connection = sqlite3.connect(self.dbName)
+        self.cursor = self.connection.cursor()
+        self.cursor.execute(f"delete from goods where id = {id}")
+        self.connection.commit()
+        self.connection.close()
 
 
 # db = DB()
-# db.addNewGood(546535523)
+# db.deleteGood(19)

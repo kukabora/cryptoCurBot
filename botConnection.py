@@ -22,6 +22,20 @@ dp.middleware.setup(LoggingMiddleware())
 
 TestStates = States()
 ###Хэндлеры состояний
+@dp.message_handler(state=TestStates.all()[3])
+async def process_setstate_command(message: types.Message):
+    state = dp.current_state(user=message.from_user.id)
+    if message.text.isdigit():
+        if message.text in db.getAllStoreGoodsByID(message.from_user.id):
+            await state.reset_state()
+            db.deleteGood(message.text)
+            await message.answer(f"Товар успешно удалён!", reply_markup=kb.storeSettings)
+        else:
+            await message.answer(f"Хитрожопый дохуя? У тебя нет товара с таким айди")
+
+    else:
+        await message.answer(f"Цифрами блять напиши цену, что непонятного?", reply=False)
+
 @dp.message_handler(state=TestStates.all()[2])
 async def process_setstate_command(message: types.Message):
     state = dp.current_state(user=message.from_user.id)
@@ -50,9 +64,17 @@ async def process_setstate_command(message: types.Message):
 
 ###Кнопки
 
+@dp.callback_query_handler(lambda c: c.data == 'delGood') 
+async def process_callback_button1(callback_query: types.CallbackQuery):
+    print(f"User {callback_query.from_user.username} is deleting single good in his store.")
+    await bot.delete_message(callback_query.message.chat.id, callback_query.message.message_id)
+    await bot.answer_callback_query(callback_query.id)
+    await state.set_state(TestStates.all()[3])
+    await bot.send_message(chat_id=callback_query.message.chat.id, text=f"""Введите айди товара, который хотите удалить: """, parse_mode="html", reply_markup=None)
+
 @dp.callback_query_handler(lambda c: c.data == 'addGood') 
 async def process_callback_button1(callback_query: types.CallbackQuery):
-    print(f"User {callback_query.from_user.username} is setting his store.")
+    print(f"User {callback_query.from_user.username} is adding new good to his store.")
     await bot.delete_message(callback_query.message.chat.id, callback_query.message.message_id)
     await bot.answer_callback_query(callback_query.id)
     db.addNewGood(callback_query.from_user.id)
