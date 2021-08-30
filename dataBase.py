@@ -167,6 +167,7 @@ class DB:
         self.connection.commit()
         self.connection.close()
 
-
 # db = DB()
-# db.deleteGood(19)
+# print([el[0] for el in db.getAllStoreGoodsByID(546535523)])
+
+# 546535523

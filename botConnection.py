@@ -26,7 +26,7 @@ TestStates = States()
 async def process_setstate_command(message: types.Message):
     state = dp.current_state(user=message.from_user.id)
     if message.text.isdigit():
-        if message.text in [el[0] for el in db.getAllStoreGoodsByID(message.from_user.id)]:
+        if int(message.text) in [el[0] for el in db.getAllStoreGoodsByID(message.from_user.id)]:
             await state.reset_state()
             db.deleteGood(message.text)
             await message.answer(f"Товар успешно удалён!", reply_markup=kb.storeSettings)
@@ -69,8 +69,18 @@ async def process_callback_button1(callback_query: types.CallbackQuery):
     print(f"User {callback_query.from_user.username} is deleting single good in his store.")
     await bot.delete_message(callback_query.message.chat.id, callback_query.message.message_id)
     await bot.answer_callback_query(callback_query.id)
+    state = dp.current_state(user=callback_query.from_user.id)
     await state.set_state(TestStates.all()[3])
-    await bot.send_message(chat_id=callback_query.message.chat.id, text=f"""Введите айди товара, который хотите удалить: """, parse_mode="html", reply_markup=None)
+    goodsInfo = db.getAllStoreGoodsByID(callback_query.from_user.id)
+    info = "<b>Введите айди товара, который хотите удалить: </b>\n\n\n"
+    for i in range(len(goodsInfo)):
+        info += f"<b>Id:</b> {goodsInfo[i][0]}\n"
+        info += f"<b>Название:</b> {goodsInfo[i][1]}\n"
+        info += f"<b>Цена:</b> {goodsInfo[i][2]}\n"
+        info += f"<b>Описание:</b> {goodsInfo[i][5]}\n"
+        if i != len(goodsInfo)-1:
+            info += "\n\n-----------\n\n"
+    await bot.send_message(chat_id=callback_query.message.chat.id, text=info, parse_mode="html", reply_markup=None)
 
 @dp.callback_query_handler(lambda c: c.data == 'addGood') 
 async def process_callback_button1(callback_query: types.CallbackQuery):
