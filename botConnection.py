@@ -26,7 +26,7 @@ TestStates = States()
 async def process_setstate_command(message: types.Message):
     state = dp.current_state(user=message.from_user.id)
     if message.text.isdigit():
-        if message.text in db.getAllStoreGoodsByID(message.from_user.id):
+        if message.text in [el[0] for el in db.getAllStoreGoodsByID(message.from_user.id)]:
             await state.reset_state()
             db.deleteGood(message.text)
             await message.answer(f"Товар успешно удалён!", reply_markup=kb.storeSettings)
