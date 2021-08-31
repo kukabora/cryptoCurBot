@@ -64,6 +64,31 @@ async def process_setstate_command(message: types.Message):
 
 ###Кнопки
 
+
+
+@dp.callback_query_handler(lambda c: c.data == 'storePreview') 
+async def process_callback_button1(callback_query: types.CallbackQuery):
+    print(f"User {callback_query.from_user.username} is looking at his store preview.")
+    await bot.delete_message(callback_query.message.chat.id, callback_query.message.message_id)
+    await bot.answer_callback_query(callback_query.id)
+    goodsInfo = db.getAllStoreGoodsByID(callback_query.from_user.id)
+    marketKB = InlineKeyboardMarkup()
+    ownerUsername = callback_query.from_user.username
+    tokenData = db.getTokenInfoByOwnerId(callback_query.from_user.id)
+    backBtn = InlineKeyboardButton("Назад", callback_data="storeSettings")
+    info = f"<b>Добро пожаловать в магазин пользователя {ownerUsername}: </b>\n\n\nЗдесь все приобритается за {tokenData[1]}"
+    for i in range(len(goodsInfo)):
+        info += f"<b>Id:</b> {goodsInfo[i][0]}\n"
+        info += f"<b>Название:</b> {goodsInfo[i][1]}\n"
+        info += f"<b>Цена:</b> {goodsInfo[i][2]}\n"
+        info += f"<b>Описание:</b> {goodsInfo[i][5]}\n"
+        if i != len(goodsInfo)-1:
+            info += "\n\n-----------\n\n"
+        marketKB.add(InlineKeyboardButton(str(goodsInfo[i][0]), callback_data="storeSettings"))
+    info += "\n Выберите ID товара, который хотите приобрести:"
+    marketKB.row(backBtn)
+    await bot.send_message(chat_id=callback_query.message.chat.id, text=info, parse_mode="html", reply_markup=marketKB)
+
 @dp.callback_query_handler(lambda c: c.data == 'delGood') 
 async def process_callback_button1(callback_query: types.CallbackQuery):
     print(f"User {callback_query.from_user.username} is deleting single good in his store.")
