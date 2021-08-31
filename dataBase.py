@@ -166,8 +166,19 @@ class DB:
         self.cursor.execute(f"delete from goods where id = {id}")
         self.connection.commit()
         self.connection.close()
+    
+    def getAllUsers(self):
+        self.connection = sqlite3.connect(self.dbName)
+        self.cursor = self.connection.cursor()
+        self.cursor.execute(f"select * from users")
+        result = self.cursor.fetchall()
+        self.connection.close()
+        return result
 
 # db = DB()
 # print([el[0] for el in db.getAllStoreGoodsByID(546535523)])
+
+db = DB()
+print(db.getAllCtyprosNamesAndEmojis())
 
 # 546535523
