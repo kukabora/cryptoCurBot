@@ -25,9 +25,25 @@ TestStates = States()
 @dp.message_handler(state=TestStates.all()[5])
 async def process_setstate_command(message: types.Message):
     state = dp.current_state(user=message.from_user.id)
-    if message.text.casefold() in [coin[0].casefold() for coin in db.getAllCryptosNamesAndEmojis()]:
-        await state.reset_state()
-        await message.answer(f"", reply_markup=kb.storeSettings)
+    if message.text.isDigit():
+        
+        await state.update_data(data={"amount":message.text.casefold()})
+        print(await state.get_data())
+
+        await state.set_state(TestStates.all()[6])
+        await message.answer(f"Введите количество валюты, которое хотите перевести этому пользователю: ", reply_markup=kb.storeSettings)
+    else:
+        await message.answer(f"")
+
+@dp.message_handler(state=TestStates.all()[5])
+async def process_setstate_command(message: types.Message):
+    state = dp.current_state(user=message.from_user.id)
+    if message.text.casefold() in [coin[0].casefold() for coin in db.getAllCtyprosNamesAndEmojis()]:
+        await state.set_state(TestStates.all()[6])
+
+        await state.update_data(data={"currency":message.text.casefold()})
+
+        await message.answer(f"Введите количество валюты, которое хотите перевести этому пользователю: \n Введите 0 чтобы отменить перевод.", reply_markup=kb.storeSettings)
     else:
         await message.answer(f"Нет криптовалюты с таким названием")
         
@@ -37,6 +53,9 @@ async def process_setstate_command(message: types.Message):
     if message.text.isdigit():
         if int(message.text) in [info[0] for info in  db.getAllUsers()]:
             await state.set_state(TestStates.all()[5])
+
+            await state.update_data(data={"recieverId":int(message.text)})
+
             info = "В какой валюте вы бы хотели сделать перевод?\n"
             for currency in db.getAllCtyprosNamesAndEmojis():
                 info += currency[1] + currency[0] + ": " + str(db.getCurrentAmountOfCurrencyByUserId(currency[0], message.from_user.id)) + "\n"

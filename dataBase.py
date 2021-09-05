@@ -175,10 +175,11 @@ class DB:
         self.connection.close()
         return result
 
+
 # db = DB()
 # print([el[0] for el in db.getAllStoreGoodsByID(546535523)])
 
 db = DB()
-print(db.getAllCtyprosNamesAndEmojis())
+print(db.getCurrentAmountOfCurrencyByUserId("Бабанокоин", 546535523))
 
 # 546535523
