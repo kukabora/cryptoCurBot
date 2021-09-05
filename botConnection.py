@@ -25,7 +25,7 @@ TestStates = States()
 @dp.message_handler(state=TestStates.all()[5])
 async def process_setstate_command(message: types.Message):
     state = dp.current_state(user=message.from_user.id)
-    if message.text.casefold() in [coin[0].casefold for coin in db.getAllCryptosNamesAndEmojis()]:
+    if message.text.casefold() in [coin[0].casefold() for coin in db.getAllCryptosNamesAndEmojis()]:
         await state.reset_state()
         await message.answer(f"", reply_markup=kb.storeSettings)
     else:
@@ -97,13 +97,13 @@ async def process_callback_button1(callback_query: types.CallbackQuery):
     allUsersInfo = db.getAllUsers()
     for i in range(len(allUsersInfo)):
         info += f"""
-<b>ID:</b>{user[i][0]}
-<b>Username:</b>{user[i][1]}
+<b>ID:</b>{allUsersInfo[i][0]}
+<b>Username:</b>{allUsersInfo[i][1]}
         """
         if i != len(allUsersInfo) - 1:
             info += "\n\n-----------\n\n"
     info += "\n Введите айди пользователя, которому хотите совершить перевод:"
-    state = dp.current_state(user=message.from_user.id)
+    state = dp.current_state(user=callback_query.from_user.id)
     await state.set_state(TestStates.all()[4])
     await bot.send_message(chat_id=callback_query.message.chat.id, text=info, parse_mode="html", reply_markup=None)
 
@@ -195,7 +195,7 @@ async def process_callback_button1(callback_query: types.CallbackQuery):
     if db.checkIsTokenOwner(callback_query.from_user.id):
         inline_btn_6 = InlineKeyboardButton('Мой магазин', callback_data='storeSettings')
         inline_btn_7 = InlineKeyboardButton('Моя монетa', callback_data='myToken')
-        cabinetKB.row(inline_btn_5, inline_btn_6, inline_btn_7)
+        cabinetKB.row(inline_btn_5, inline_btn_6, inline_btn_7, transactionBtn)
         cabinetKB.row(kb.inline_btn_8)
     else:
         cabinetKB.row(inline_btn_5, transactionBtn)
