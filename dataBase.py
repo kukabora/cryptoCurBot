@@ -130,11 +130,6 @@ class DB:
         self.cursor = self.connection.cursor()
         self.cursor.execute(f"insert into transactions (senderId, recieverId, currencyId, fromStore, amount) VALUES ({senderId}, {recieverId}, {currencyId}, {fromStore}, {amount})")
         self.connection.commit()
-        currencyName = self.getCryptoNameById(currencyId)
-        self.updateWalletAmountOf(currencyName, -amount, senderId)
-        self.connection.commit()
-        self.updateWalletAmountOf(currencyName, amount, id)
-        self.connection.commit()
         self.connection.close()
 
     def addNewGood(self, id):
@@ -175,11 +170,19 @@ class DB:
         self.connection.close()
         return result
 
+    def getCurrencyIdByName(self, name):
+        self.connection = sqlite3.connect(self.dbName)
+        self.cursor = self.connection.cursor()
+        self.cursor.execute(f"select id from cryptos where name = '{name}'")
+        result = self.cursor.fetchone()
+        self.connection.close()
+        return result[0]
 
 # db = DB()
 # print([el[0] for el in db.getAllStoreGoodsByID(546535523)])
 
-db = DB()
-print(db.getCurrentAmountOfCurrencyByUserId("Бабанокоин", 546535523))
+# db = DB()
+# print(db.getCurrentAmountOfCurrencyByUserId("бАбАнОкОиН".casefold().capitalize(), 546535523))
+
 
 # 546535523

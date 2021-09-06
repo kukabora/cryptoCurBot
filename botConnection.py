@@ -20,20 +20,42 @@ bot = Bot(token=API_TOKEN)
 dp = Dispatcher(bot, storage=MemoryStorage())
 dp.middleware.setup(LoggingMiddleware())
 
+def makeTransactionBetweenUsers(senderId, recieverId, currencyId, fromStore, amount):
+    db.createNewTransaction(senderId, recieverId, currencyId, fromStore, amount)
+    currencyName = db.getCryptoNameById(currencyId)
+    db.updateWalletAmountOf(currencyName, -amount, senderId)
+    db.updateWalletAmountOf(currencyName, amount, recieverId)
+
 TestStates = States()
 ###Хэндлеры состояний
-@dp.message_handler(state=TestStates.all()[5])
+@dp.message_handler(state=TestStates.all()[6])
 async def process_setstate_command(message: types.Message):
     state = dp.current_state(user=message.from_user.id)
-    if message.text.isDigit():
-        
-        await state.update_data(data={"amount":message.text.casefold()})
-        print(await state.get_data())
-
-        await state.set_state(TestStates.all()[6])
-        await message.answer(f"Введите количество валюты, которое хотите перевести этому пользователю: ", reply_markup=kb.storeSettings)
+    user_data = await state.get_data()
+    if message.text.isdigit():
+        if db.getCurrentAmountOfCurrencyByUserId(user_data['currency'], message.from_user.id) < int(message.text):
+            await message.answer(f"У тебя столько нету.\nНа данный момент валюты '{user_data['currency'].capitalize()}' у тебя всего лишь {db.getCurrentAmountOfCurrencyByUserId(user_data['currency'].capitalize(), message.from_user.id)}", reply_markup=None)
+        elif int(message.text) < 0:
+            await message.answer("Ты даун)")
+        else:
+            inline_btn_5 = InlineKeyboardButton('Мой баланс', callback_data='balance')
+            cabinetKB = InlineKeyboardMarkup(row_width=3)
+            transactionBtn = InlineKeyboardButton('Переводы', callback_data='currencySendRecieve')
+            if db.checkIsTokenOwner(message.from_user.id):
+                inline_btn_6 = InlineKeyboardButton('Мой магазин', callback_data='storeSettings')
+                inline_btn_7 = InlineKeyboardButton('Моя монетa', callback_data='myToken')
+                cabinetKB.row(inline_btn_5, inline_btn_6, inline_btn_7, transactionBtn)
+                cabinetKB.row(kb.inline_btn_8)
+            else:
+                cabinetKB.row(inline_btn_5, transactionBtn)
+                cabinetKB.row(kb.inline_btn_8)
+            print(message.from_user.id, user_data['recieverId'], db.getCurrencyIdByName(user_data['currency']), 0, int(message.text))
+            makeTransactionBetweenUsers(message.from_user.id, user_data['recieverId'], db.getCurrencyIdByName(user_data['currency']), 0, int(message.text))
+            await state.reset_state()
+            await message.answer(f"Перевод успешно произведен!", reply_markup=cabinetKB)
+            await bot.send_message(user_data['recieverId'], text=f"Пользователь {message.from_user.username} перевел вам {message.text} {user_data['currency']}\nТекущий баланс: <b>{db.getCurrentAmountOfCurrencyByUserId(user_data{'currency'}, user_data['recieverId'])}</b>", parse_mode="html")
     else:
-        await message.answer(f"")
+        await message.answer(f"Ммм. и че блять мне перевести ему {message.text} {user_data[currency]}'ов???\nНапиши блять нормально цифрами количество, которое хочешь ему перевести.", reply_markup=None)
 
 @dp.message_handler(state=TestStates.all()[5])
 async def process_setstate_command(message: types.Message):
@@ -41,9 +63,9 @@ async def process_setstate_command(message: types.Message):
     if message.text.casefold() in [coin[0].casefold() for coin in db.getAllCtyprosNamesAndEmojis()]:
         await state.set_state(TestStates.all()[6])
 
-        await state.update_data(data={"currency":message.text.casefold()})
+        await state.update_data(data={"currency":message.text.casefold().capitalize()})
 
-        await message.answer(f"Введите количество валюты, которое хотите перевести этому пользователю: \n Введите 0 чтобы отменить перевод.", reply_markup=kb.storeSettings)
+        await message.answer(f"Введите количество валюты, которое хотите перевести этому пользователю: \n Введите 0 чтобы отменить перевод.", reply_markup=None)
     else:
         await message.answer(f"Нет криптовалюты с таким названием")
         
@@ -73,7 +95,7 @@ async def process_setstate_command(message: types.Message):
         if int(message.text) in [el[0] for el in db.getAllStoreGoodsByID(message.from_user.id)]:
             await state.reset_state()
             db.deleteGood(message.text)
-            await message.answer(f"Товар успешно удалён!", reply_markup=kb.storeSettings)
+            await message.answer(f"Товар успешно удалён!", reply_markup=None)
         else:
             await message.answer(f"Хитрожопый дохуя? У тебя нет товара с таким айди")
 
