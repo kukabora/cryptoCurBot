@@ -178,11 +178,23 @@ class DB:
         self.connection.close()
         return result[0]
 
-# db = DB()
-# print([el[0] for el in db.getAllStoreGoodsByID(546535523)])
+    def createNewCurrency(self, name, smile, kekPrice, img, ownerId):
+        self.connection = sqlite3.connect(self.dbName)
+        self.cursor = self.connection.cursor()
+        self.cursor.execute(f"insert into cryptos (name, kekPrice, transactionsPerDay, ownerId, smile, img) values ('{name.capitalize()}', {kekPrice}, {0}, {ownerId}, '{smile}', '{img}')")
+        self.connection.commit()
+        self.cursor.execute(f"ALTER TABLE wallets ADD {name.capitalize()} DOUBLE  DEFAULT (0.0)")
+        self.connection.commit()
+        self.cursor.execute(f"update users set token_owner = 1 where id = {ownerId}")
+        self.connection.commit()
+        self.connection.close()
+
 
 # db = DB()
-# print(db.getCurrentAmountOfCurrencyByUserId("бАбАнОкОиН".casefold().capitalize(), 546535523))
+    # print([el[0] for el in db.getAllStoreGoodsByID(546535523)])
+
+# db = DB()
+# db.createNewCurrency("злойкоткоин", "😾", 458, "cryptoImg/Злойкоткоин.jpg", 525444045)
 
 
 # 546535523

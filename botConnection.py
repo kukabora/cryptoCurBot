@@ -53,7 +53,7 @@ async def process_setstate_command(message: types.Message):
             makeTransactionBetweenUsers(message.from_user.id, user_data['recieverId'], db.getCurrencyIdByName(user_data['currency']), 0, int(message.text))
             await state.reset_state()
             await message.answer(f"Перевод успешно произведен!", reply_markup=cabinetKB)
-            await bot.send_message(user_data['recieverId'], text=f"Пользователь {message.from_user.username} перевел вам {message.text} {user_data['currency']}\nТекущий баланс: <b>{db.getCurrentAmountOfCurrencyByUserId(user_data{'currency'}, user_data['recieverId'])}</b>", parse_mode="html")
+            await bot.send_message(user_data['recieverId'], text=f"Пользователь {message.from_user.username} перевел вам {message.text} {user_data['currency']}\nТекущий баланс: <b>{db.getCurrentAmountOfCurrencyByUserId(user_data['currency'], user_data['recieverId'])}</b>", parse_mode="html")
     else:
         await message.answer(f"Ммм. и че блять мне перевести ему {message.text} {user_data[currency]}'ов???\nНапиши блять нормально цифрами количество, которое хочешь ему перевести.", reply_markup=None)
 
@@ -142,7 +142,7 @@ async def process_callback_button1(callback_query: types.CallbackQuery):
 <b>Username:</b>{allUsersInfo[i][1]}
         """
         if i != len(allUsersInfo) - 1:
-            info += "\n\n-----------\n\n"
+            info += "-----------\n"
     info += "\n Введите айди пользователя, которому хотите совершить перевод:"
     state = dp.current_state(user=callback_query.from_user.id)
     await state.set_state(TestStates.all()[4])
@@ -158,14 +158,14 @@ async def process_callback_button1(callback_query: types.CallbackQuery):
     ownerUsername = callback_query.from_user.username
     tokenData = db.getTokenInfoByOwnerId(callback_query.from_user.id)
     backBtn = InlineKeyboardButton("Назад", callback_data="storeSettings")
-    info = f"<b>Добро пожаловать в магазин пользователя {ownerUsername}: </b>\n\n\nЗдесь все приобритается за {tokenData[1]}"
+    info = f"<b>Добро пожаловать в магазин пользователя {ownerUsername}: </b>\nЗдесь все приобритается за {tokenData[1]}"
     for i in range(len(goodsInfo)):
         info += f"<b>Id:</b> {goodsInfo[i][0]}\n"
         info += f"<b>Название:</b> {goodsInfo[i][1]}\n"
         info += f"<b>Цена:</b> {goodsInfo[i][2]}\n"
         info += f"<b>Описание:</b> {goodsInfo[i][5]}\n"
         if i != len(goodsInfo)-1:
-            info += "\n\n-----------\n\n"
+            info += "-----------\n"
         marketKB.add(InlineKeyboardButton(str(goodsInfo[i][0]), callback_data="storeSettings"))
     info += "\n Выберите ID товара, который хотите приобрести:"
     marketKB.row(backBtn)
@@ -179,14 +179,14 @@ async def process_callback_button1(callback_query: types.CallbackQuery):
     state = dp.current_state(user=callback_query.from_user.id)
     await state.set_state(TestStates.all()[3])
     goodsInfo = db.getAllStoreGoodsByID(callback_query.from_user.id)
-    info = "<b>Введите айди товара, который хотите удалить: </b>\n\n\n"
+    info = "<b>Введите айди товара, который хотите удалить: </b>\n"
     for i in range(len(goodsInfo)):
         info += f"<b>Id:</b> {goodsInfo[i][0]}\n"
         info += f"<b>Название:</b> {goodsInfo[i][1]}\n"
         info += f"<b>Цена:</b> {goodsInfo[i][2]}\n"
         info += f"<b>Описание:</b> {goodsInfo[i][5]}\n"
         if i != len(goodsInfo)-1:
-            info += "\n\n-----------\n\n"
+            info += "-----------\n"
     await bot.send_message(chat_id=callback_query.message.chat.id, text=info, parse_mode="html", reply_markup=None)
 
 @dp.callback_query_handler(lambda c: c.data == 'addGood') 
@@ -308,11 +308,7 @@ async def process_callback_button1(callback_query: types.CallbackQuery):
     f"""
     <b>Ваш баланс составляет:</b>
     <b>______________________</b>
-
-
 {balanceData}
-    
-
     В общей сложности это составляет 0 Кекекоинов.
     """, parse_mode="html", reply_markup=cabinetKB)
 
