@@ -194,7 +194,13 @@ class DB:
     # print([el[0] for el in db.getAllStoreGoodsByID(546535523)])
 
 # db = DB()
-# db.createNewCurrency("злойкоткоин", "😾", 458, "cryptoImg/Злойкоткоин.jpg", 525444045)
+# db.createNewCurrency("Mutantcoin", "🦠", 732, "cryptoImg/Mutantcoin.jpg", 462026625)
+
+
+# 732 MutantCoin
+
+# 902 Монголкоин
+
 
 
 # 546535523

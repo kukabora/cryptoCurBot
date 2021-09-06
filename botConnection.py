@@ -55,7 +55,7 @@ async def process_setstate_command(message: types.Message):
             await message.answer(f"Перевод успешно произведен!", reply_markup=cabinetKB)
             await bot.send_message(user_data['recieverId'], text=f"Пользователь {message.from_user.username} перевел вам {message.text} {user_data['currency']}\nТекущий баланс: <b>{db.getCurrentAmountOfCurrencyByUserId(user_data['currency'], user_data['recieverId'])}</b>", parse_mode="html")
     else:
-        await message.answer(f"Ммм. и че блять мне перевести ему {message.text} {user_data[currency]}'ов???\nНапиши блять нормально цифрами количество, которое хочешь ему перевести.", reply_markup=None)
+        await message.answer(f"Ммм. и че блять мне перевести ему {message.text} {user_data['currency']}'ов???\nНапиши блять нормально цифрами количество, которое хочешь ему перевести.", reply_markup=None)
 
 @dp.message_handler(state=TestStates.all()[5])
 async def process_setstate_command(message: types.Message):
@@ -313,6 +313,13 @@ async def process_callback_button1(callback_query: types.CallbackQuery):
     """, parse_mode="html", reply_markup=cabinetKB)
 
 ###Команды
+
+@dp.message_handler(commands=['keyboardTest'])
+async def send_welcome(message: types.Message):
+    print(message.from_user.id)
+    await message.answer(text=f'<a href="https://t.me/kekestanCurrencyBot/helo">Test</a>', parse_mode="html")
+
+
 @dp.message_handler(commands=['checkId'])
 async def send_welcome(message: types.Message):
     print(message.from_user.id)
