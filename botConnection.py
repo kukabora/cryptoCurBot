@@ -1,7 +1,9 @@
 import logging
 from dataBase import DB
 import keyboards as kb
-from aiogram.types import KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import ReplyKeyboardRemove, \
+    ReplyKeyboardMarkup, KeyboardButton, \
+    InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram import Bot, Dispatcher, executor, types
 import re
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
@@ -34,7 +36,7 @@ async def process_setstate_command(message: types.Message):
     user_data = await state.get_data()
     if message.text.isdigit():
         if db.getCurrentAmountOfCurrencyByUserId(user_data['currency'], message.from_user.id) < int(message.text):
-            await message.answer(f"У тебя столько нету.\nНа данный момент валюты '{user_data['currency'].capitalize()}' у тебя всего лишь {db.getCurrentAmountOfCurrencyByUserId(user_data['currency'].capitalize(), message.from_user.id)}", reply_markup=None)
+            await message.answer(f"У тебя столько нету.\nНа данный момент валюты '{user_data['currency'].capitalize()}' у тебя всего лишь {db.getCurrentAmountOfCurrencyByUserId(user_data['currency'].capitalize(), message.from_user.id)}", reply_markup=ReplyKeyboardRemove())
         elif int(message.text) < 0:
             await message.answer("Ты даун)")
         else:
@@ -49,40 +51,46 @@ async def process_setstate_command(message: types.Message):
             else:
                 cabinetKB.row(inline_btn_5, transactionBtn)
                 cabinetKB.row(kb.inline_btn_8)
-            print(message.from_user.id, user_data['recieverId'], db.getCurrencyIdByName(user_data['currency']), 0, int(message.text))
-            makeTransactionBetweenUsers(message.from_user.id, user_data['recieverId'], db.getCurrencyIdByName(user_data['currency']), 0, int(message.text))
-            await state.reset_state()
-            await message.answer(f"Перевод успешно произведен!", reply_markup=cabinetKB)
-            await bot.send_message(user_data['recieverId'], text=f"Пользователь {message.from_user.username} перевел вам {message.text} {user_data['currency']}\nТекущий баланс: <b>{db.getCurrentAmountOfCurrencyByUserId(user_data['currency'], user_data['recieverId'])}</b>", parse_mode="html")
+            if (int(message.text) > 0):
+                makeTransactionBetweenUsers(message.from_user.id, user_data['recieverId'], db.getCurrencyIdByName(user_data['currency']), 0, int(message.text))
+                await message.answer(f"Перевод успешно произведен!", reply_markup=cabinetKB)
+                await bot.send_message(user_data['recieverId'], text=f"Пользователь {message.from_user.username} перевел вам {message.text} {user_data['currency']}\nТекущий баланс: <b>{db.getCurrentAmountOfCurrencyByUserId(user_data['currency'], user_data['recieverId'])}</b>", parse_mode="html")
+            else:
+                await state.reset_state()
+                await message.answer(f"Перевод успешно отменен.", reply_markup=cabinetKB)
     else:
-        await message.answer(f"Ммм. и че блять мне перевести ему {message.text} {user_data['currency']}'ов???\nНапиши блять нормально цифрами количество, которое хочешь ему перевести.", reply_markup=None)
+        await message.answer(f"Ммм. и че блять мне перевести ему {message.text} {user_data['currency']}'ов???\nНапиши блять нормально цифрами количество, которое хочешь ему перевести.", reply_markup=ReplyKeyboardRemove())
 
 @dp.message_handler(state=TestStates.all()[5])
 async def process_setstate_command(message: types.Message):
     state = dp.current_state(user=message.from_user.id)
+    message.text = message.text[1:]
     if message.text.casefold() in [coin[0].casefold() for coin in db.getAllCtyprosNamesAndEmojis()]:
         await state.set_state(TestStates.all()[6])
 
         await state.update_data(data={"currency":message.text.casefold().capitalize()})
 
-        await message.answer(f"Введите количество валюты, которое хотите перевести этому пользователю: \n Введите 0 чтобы отменить перевод.", reply_markup=None)
+        await message.answer(f"Введите количество валюты, которое хотите перевести этому пользователю: \n Введите 0 чтобы отменить перевод.", reply_markup=ReplyKeyboardRemove())
     else:
         await message.answer(f"Нет криптовалюты с таким названием")
         
 @dp.message_handler(state=TestStates.all()[4])
 async def process_setstate_command(message: types.Message):
     state = dp.current_state(user=message.from_user.id)
-    if message.text.isdigit():
-        if int(message.text) in [info[0] for info in  db.getAllUsers()]:
+    if message.text.split(' ')[0].isdigit():
+        if int(message.text.split(' ')[0]) in [info[0] for info in  db.getAllUsers()]:
             await state.set_state(TestStates.all()[5])
 
-            await state.update_data(data={"recieverId":int(message.text)})
+            await state.update_data(data={"recieverId":int(message.text.split(' ')[0])})
 
             info = "В какой валюте вы бы хотели сделать перевод?\n"
+            keyBoard = ReplyKeyboardMarkup()
             for currency in db.getAllCtyprosNamesAndEmojis():
                 info += currency[1] + currency[0] + ": " + str(db.getCurrentAmountOfCurrencyByUserId(currency[0], message.from_user.id)) + "\n"
+                btn = KeyboardButton(str(currency[1]+currency[0]))
+                keyBoard.row(btn)
             info += "Введите название криптовалюты, в которой вы бы хотели осуществить перевод"
-            await message.answer(info, reply_markup=None)
+            await message.answer(info, reply_markup=keyBoard)
         else:
             await message.answer(f"Нет пользователя с таким айди")
     else:
@@ -95,12 +103,12 @@ async def process_setstate_command(message: types.Message):
         if int(message.text) in [el[0] for el in db.getAllStoreGoodsByID(message.from_user.id)]:
             await state.reset_state()
             db.deleteGood(message.text)
-            await message.answer(f"Товар успешно удалён!", reply_markup=None)
+            await message.answer(f"Товар успешно удалён!", reply_markup=ReplyKeyboardRemove())
         else:
             await message.answer(f"Хитрожопый дохуя? У тебя нет товара с таким айди")
 
     else:
-        await message.answer(f"Цифрами блять напиши цену, что непонятного?", reply=False)
+        await message.answer(f"Цифрами блять напиши ID, что непонятного?", reply=False)
 
 @dp.message_handler(state=TestStates.all()[2])
 async def process_setstate_command(message: types.Message):
@@ -126,7 +134,7 @@ async def process_setstate_command(message: types.Message):
     db.updateGoodInfo(message.from_user.id, "name", f"'{message.text}'")
     await state.set_state(TestStates.all()[1])
     tokenInfo = db.getTokenInfoByOwnerId(message.from_user.id)
-    await message.answer(f"Отправьте, пожалуйста, цену товара в своей валюте ({tokenInfo[1]}):", reply_markup=None)
+    await message.answer(f"Отправьте, пожалуйста, цену товара в своей валюте ({tokenInfo[1]}):", reply_markup=ReplyKeyboardRemove())
 
 ###Кнопки
 @dp.callback_query_handler(lambda c: c.data == 'currencySendRecieve') 
@@ -136,7 +144,12 @@ async def process_callback_button1(callback_query: types.CallbackQuery):
     await bot.answer_callback_query(callback_query.id)
     info = "Доступные для перевода пользователи:\n\n"
     allUsersInfo = db.getAllUsers()
+    keyBoard = ReplyKeyboardMarkup()
     for i in range(len(allUsersInfo)):
+        if str(allUsersInfo[i][0]) == str(callback_query.from_user.id):
+            continue
+        btn = KeyboardButton(str(allUsersInfo[i][0]) + " - " + str(allUsersInfo[i][1]))
+        keyBoard.row(btn)
         info += f"""
 <b>ID:</b>{allUsersInfo[i][0]}
 <b>Username:</b>{allUsersInfo[i][1]}
@@ -146,7 +159,7 @@ async def process_callback_button1(callback_query: types.CallbackQuery):
     info += "\n Введите айди пользователя, которому хотите совершить перевод:"
     state = dp.current_state(user=callback_query.from_user.id)
     await state.set_state(TestStates.all()[4])
-    await bot.send_message(chat_id=callback_query.message.chat.id, text=info, parse_mode="html", reply_markup=None)
+    await bot.send_message(chat_id=callback_query.message.chat.id, text=info, parse_mode="html", reply_markup=keyBoard)
 
 @dp.callback_query_handler(lambda c: c.data == 'storePreview') 
 async def process_callback_button1(callback_query: types.CallbackQuery):
@@ -187,7 +200,7 @@ async def process_callback_button1(callback_query: types.CallbackQuery):
         info += f"<b>Описание:</b> {goodsInfo[i][5]}\n"
         if i != len(goodsInfo)-1:
             info += "-----------\n"
-    await bot.send_message(chat_id=callback_query.message.chat.id, text=info, parse_mode="html", reply_markup=None)
+    await bot.send_message(chat_id=callback_query.message.chat.id, text=info, parse_mode="html", reply_markup=ReplyKeyboardRemove())
 
 @dp.callback_query_handler(lambda c: c.data == 'addGood') 
 async def process_callback_button1(callback_query: types.CallbackQuery):
@@ -197,7 +210,7 @@ async def process_callback_button1(callback_query: types.CallbackQuery):
     db.addNewGood(callback_query.from_user.id)
     state = dp.current_state(user=callback_query.from_user.id)
     await state.set_state(TestStates.all()[0])
-    await bot.send_message(chat_id=callback_query.message.chat.id, text="""<b>Отправьте, пожалуйста, название товара:</b>\n Внимание!\n Начав создавать товар, вы обязаны заполнить все поля до конца достоверной информацией. \n В противном случае карточка товара будет содержать всякую хуйню.""", parse_mode="html", reply_markup=None)
+    await bot.send_message(chat_id=callback_query.message.chat.id, text="""<b>Отправьте, пожалуйста, название товара:</b>\n Внимание!\n Начав создавать товар, вы обязаны заполнить все поля до конца достоверной информацией. \n В противном случае карточка товара будет содержать всякую хуйню.""", parse_mode="html", reply_markup=ReplyKeyboardRemove())
 
 @dp.callback_query_handler(lambda c: c.data == 'storeSettings') 
 async def process_callback_button1(callback_query: types.CallbackQuery):
