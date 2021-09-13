@@ -30,6 +30,46 @@ def makeTransactionBetweenUsers(senderId, recieverId, currencyId, fromStore, amo
 
 TestStates = States()
 ###Хэндлеры состояний
+@dp.message_handler(state=TestStates.all()[9])
+async def process_setstate_command(message: types.Message):
+    state = dp.current_state(user=message.from_user.id)
+    if message.text == "◀️Назад":
+        await state.reset_state()
+        await bot.send_message(chat_id=message.chat.id, text="Возвращаем Вас в главное меню!", reply_markup=ReplyKeyboardRemove())
+        await bot.send_message(chat_id=message.chat.id, text="С чего начнём?", reply_markup=kb.inline_kb2)
+    else:
+        if message.text == "✔Да":
+            stateData = await state.get_data()
+            if db.getCurrentAmountOfCurrencyByUserId(stateData['cryptoData'][1], message.from_user.id) >= int(stateData['goodInfo'][2]):
+                makeTransactionBetweenUsers(message.from_user.id, stateData['storeId'], stateData['cryptoData'][0], 1, stateData['goodInfo'][2])
+                await bot.send_message(stateData['storeId'], f"Пользователь <b>{message.from_user.username}</b> купил у вас товар под номером {stateData['goodInfo'][0]}({stateData['goodInfo'][1]}) за {stateData['goodInfo'][2]} {stateData['cryptoData'][1]}'ов.\n\n<b>Текущий баланс: </b>{db.getCurrentAmountOfCurrencyByUserId(stateData['cryptoData'][1], stateData['storeId'])}", parse_mode="html")
+                await message.answer("Покупка успешна!", reply_markup=ReplyKeyboardRemove())
+                await bot.send_message(chat_id=message.chat.id, text="С чего начнём?", reply_markup=kb.inline_kb2)
+                await state.reset_state()
+            else:
+                await message.answer("У тебя денег не хватает, бичуган ебаный.")
+        elif message.text == "❌Нет":
+            await state.set_state(TestStates.all()[7])
+            stateData = await state.get_data()
+            cryptoData = stateData['cryptoData']
+            await state.update_data(data={"storeId": int(cryptoData[4])})
+            info = f"Добро пожаловать в магазин пользователя <b>{db.findUserById(int(stateData['storeId']))[0][1]}</b>: \nЗдесь все приобритается за <b>{cryptoData[1]}</b>\n\n<b><u>ТОВАРЫ:</u></b>\n"
+            goodsInfo = db.getAllStoreGoodsByID(int(cryptoData[4]))
+            marketKB = ReplyKeyboardMarkup()
+            for i in range(len(goodsInfo)):
+                info += f"<b>Id:</b> {goodsInfo[i][0]}\n"
+                info += f"<b>Название:</b> {goodsInfo[i][1]}\n"
+                if i != len(goodsInfo)-1:
+                    info += "-----------\n"
+                marketKB.add(KeyboardButton(str(goodsInfo[i][0]) + " | " + str(goodsInfo[i][1])))
+            info += "\n Выберите ID товара, который хотите приобрести:"
+            marketKB.row(kb.cancelButton)
+            await state.set_state(TestStates.all()[8])
+            await message.answer(info, parse_mode="html", reply_markup=marketKB)
+        else:
+            await message.answer("Ты вообще че за хуйню вписал. У тебя было всего 3 кнопки сука и ты не смог из них выбрать ни одну?????? Ты в порядке?")
+
+
 @dp.message_handler(state=TestStates.all()[8])
 async def process_setstate_command(message: types.Message):
     state = dp.current_state(user=message.from_user.id)
@@ -37,21 +77,25 @@ async def process_setstate_command(message: types.Message):
         await state.reset_state()
         await bot.send_message(chat_id=message.chat.id, text="Возвращаем Вас в главное меню!", reply_markup=ReplyKeyboardRemove())
         await bot.send_message(chat_id=message.chat.id, text="С чего начнём?", reply_markup=kb.inline_kb2)
-    messageData = message.text.split(' ')
-    stateData = await state.get_data()
-    if int(messageData[0]) in [int(good[0]) for good in db.getAllStoreGoodsByID(stateData['storeId'])]:
-        await state.update_data(data={"goodId":int(messageData[0])})
-        goodInfo = db.getGoodInfoById(int(messageData[0]))
-        info = f"<b>ID:</b>{goodInfo[0]}\n"
-        info += f"<b>Цена:</b>{goodInfo[1]} {db.getCryptoNameById(goodInfo[3])}\n"
-        info += f"<b>Продавец:</b>{db.findUserById(goodInfo[4])[0][1]}\n"
-        info += f"<b>Описание:</b>{goodInfo[5]}\n"
-        info += "----------------\nВы точно хотите купить этот товар?"
-        goodKB = ReplyKeyboardMarkup().row(KeyboardButton("✔Да"), KeyboardButton("❌Нет"))
-        goodKB.row(kb.cancelButton)
-        await message.answer(info, parse_mode="html", reply_markup=goodKB)
     else:
-        await message.answer("Нет такого товара в этом магазине.")
+        messageData = message.text.split(' ')
+        stateData = await state.get_data()
+        if int(messageData[0]) in [int(good[0]) for good in db.getAllStoreGoodsByID(stateData['storeId'])]:
+            await state.update_data(data={"goodId":int(messageData[0])})
+            goodInfo = db.getGoodInfoById(int(messageData[0]))
+            await state.update_data(data={"goodInfo":goodInfo})
+            await state.set_state(TestStates.all()[9])
+            info = f"<b>ID:</b>{goodInfo[0]}\n"
+            info += f"<b>Название:</b>{goodInfo[1]}\n"
+            info += f"<b>Цена:</b>{goodInfo[2]} {db.getCryptoNameById(goodInfo[3])}\n"
+            info += f"<b>Продавец:</b>{db.findUserById(goodInfo[4])[0][1]}\n"
+            info += f"<b>Описание:</b>{goodInfo[5]}\n"
+            info += "----------------\nВы точно хотите купить этот товар?"
+            goodKB = ReplyKeyboardMarkup().row(KeyboardButton("✔Да"), KeyboardButton("❌Нет"))
+            goodKB.row(kb.cancelButton)
+            await message.answer(info, parse_mode="html", reply_markup=goodKB)
+        else:
+            await message.answer("Нет такого товара в этом магазине.")
 
 @dp.message_handler(state=TestStates.all()[7])
 async def process_setstate_command(message: types.Message):
@@ -65,6 +109,7 @@ async def process_setstate_command(message: types.Message):
         if (message.text in [crypto[1] for crypto in db.getAllCryptosInfo()]):
             cryptoData = db.getCryptoInfoByName(message.text)
             await state.update_data(data={"storeId": int(cryptoData[4])})
+            await state.update_data(data={"cryptoData": db.getCryptoInfoByName(message.text)})
             await state.set_state(TestStates.all()[8])
             info = f"Добро пожаловать в магазин пользователя <b>{db.findUserById(int(cryptoData[4]))[0][1]}</b>: \nЗдесь все приобритается за <b>{message.text}</b>\n\n<b><u>ТОВАРЫ:</u></b>\n"
             goodsInfo = db.getAllStoreGoodsByID(int(cryptoData[4]))
