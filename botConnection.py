@@ -30,6 +30,60 @@ def makeTransactionBetweenUsers(senderId, recieverId, currencyId, fromStore, amo
 
 TestStates = States()
 ###Хэндлеры состояний
+@dp.message_handler(state=TestStates.all()[8])
+async def process_setstate_command(message: types.Message):
+    state = dp.current_state(user=message.from_user.id)
+    if message.text == "◀️Назад":
+        await state.reset_state()
+        await bot.send_message(chat_id=message.chat.id, text="Возвращаем Вас в главное меню!", reply_markup=ReplyKeyboardRemove())
+        await bot.send_message(chat_id=message.chat.id, text="С чего начнём?", reply_markup=kb.inline_kb2)
+    messageData = message.text.split(' ')
+    stateData = await state.get_data()
+    if int(messageData[0]) in [int(good[0]) for good in db.getAllStoreGoodsByID(stateData['storeId'])]:
+        await state.update_data(data={"goodId":int(messageData[0])})
+        goodInfo = db.getGoodInfoById(int(messageData[0]))
+        info = f"<b>ID:</b>{goodInfo[0]}\n"
+        info += f"<b>Цена:</b>{goodInfo[1]} {db.getCryptoNameById(goodInfo[3])}\n"
+        info += f"<b>Продавец:</b>{db.findUserById(goodInfo[4])[0][1]}\n"
+        info += f"<b>Описание:</b>{goodInfo[5]}\n"
+        info += "----------------\nВы точно хотите купить этот товар?"
+        goodKB = ReplyKeyboardMarkup().row(KeyboardButton("✔Да"), KeyboardButton("❌Нет"))
+        goodKB.row(kb.cancelButton)
+        await message.answer(info, parse_mode="html", reply_markup=goodKB)
+    else:
+        await message.answer("Нет такого товара в этом магазине.")
+
+@dp.message_handler(state=TestStates.all()[7])
+async def process_setstate_command(message: types.Message):
+    state = dp.current_state(user=message.from_user.id)
+    if message.text == "◀️Назад":
+        await state.reset_state()
+        await bot.send_message(chat_id=message.chat.id, text="Возвращаем Вас в главное меню!", reply_markup=ReplyKeyboardRemove())
+        await bot.send_message(chat_id=message.chat.id, text="С чего начнём?", reply_markup=kb.inline_kb2)
+    else:
+        message.text = message.text[1:]
+        if (message.text in [crypto[1] for crypto in db.getAllCryptosInfo()]):
+            cryptoData = db.getCryptoInfoByName(message.text)
+            await state.update_data(data={"storeId": int(cryptoData[4])})
+            await state.set_state(TestStates.all()[8])
+            info = f"Добро пожаловать в магазин пользователя <b>{db.findUserById(int(cryptoData[4]))[0][1]}</b>: \nЗдесь все приобритается за <b>{message.text}</b>\n\n<b><u>ТОВАРЫ:</u></b>\n"
+            goodsInfo = db.getAllStoreGoodsByID(int(cryptoData[4]))
+            marketKB = ReplyKeyboardMarkup()
+            for i in range(len(goodsInfo)):
+                info += f"<b>Id:</b> {goodsInfo[i][0]}\n"
+                info += f"<b>Название:</b> {goodsInfo[i][1]}\n"
+                if i != len(goodsInfo)-1:
+                    info += "-----------\n"
+                marketKB.add(KeyboardButton(str(goodsInfo[i][0]) + " | " + str(goodsInfo[i][1])))
+            info += "\n Выберите ID товара, который хотите приобрести:"
+            marketKB.row(kb.cancelButton)
+            await state.set_state(TestStates.all()[8])
+            await message.answer(info, parse_mode="html", reply_markup=marketKB)
+        else:
+            print("Нет такого магазина.")
+
+
+
 @dp.message_handler(state=TestStates.all()[6])
 async def process_setstate_command(message: types.Message):
     state = dp.current_state(user=message.from_user.id)
@@ -281,13 +335,27 @@ async def process_callback_button1(callback_query: types.CallbackQuery):
 
 @dp.callback_query_handler(lambda c: c.data == 'store')
 async def process_callback_button1(callback_query: types.CallbackQuery):
+    state = dp.current_state(user=callback_query.from_user.id)
     print(f"User {callback_query.from_user.username} entered store.")
     try:
         await bot.delete_message(callback_query.message.chat.id, callback_query.message.message_id)
     except:
         pass
+    info = "Какую криптовалюту вы бы хотели использовать при покупке?\n"
+    storeKbd = ReplyKeyboardMarkup()
+    currencies = db.getAllCryptosInfo()
+    for i in range(len(currencies)):
+        if currencies[i][4]==callback_query.from_user.id:
+            continue
+        info += "<b>Валюта:</b> " + currencies[i][5]+ currencies[i][1] + "\n<b>Количество товаров:</b> "  + str(len(db.getAllStoreGoodsByID(currencies[i][4]))) + "\n<b>Владелец:</b> " + str(db.findUserById(currencies[i][4])[0][1]) + "\n" 
+        btn = KeyboardButton(text = str(currencies[i][5]) + str(currencies[i][1]))
+        storeKbd.row(btn)
+        if (i!=len(currencies)-1):
+            info += "----------------\n"
+    storeKbd.row(kb.cancelButton)
     await bot.answer_callback_query(callback_query.id)
-    await bot.send_message(chat_id=callback_query.message.chat.id, text=f"Нинада ломать бота я вижу тебя, {callback_query.from_user.username}", reply_markup=kb.testKB)
+    await state.set_state(TestStates.all()[7])
+    await bot.send_message(chat_id=callback_query.message.chat.id, text=info, parse_mode="html", reply_markup=storeKbd)
 
 @dp.callback_query_handler(lambda c: c.data == 'tradeBtn')
 async def process_callback_button1(callback_query: types.CallbackQuery):
@@ -360,10 +428,6 @@ async def process_callback_button1(callback_query: types.CallbackQuery):
 
 ###Команды
 
-@dp.message_handler(commands=['keyboardTest'])
-async def send_welcome(message: types.Message):
-    print(message.from_user.id)
-    await message.answer(text=f'<a href="https://t.me/kekestanCurrencyBot/helo">Test</a>', parse_mode="html")
 
 
 @dp.message_handler(commands=['checkId'])

@@ -22,3 +22,4 @@ backToCabinetBtn = InlineKeyboardButton('Назад', callback_data='cabinet')
 storeSettings = InlineKeyboardMarkup().row(addGoodBtn, delGoodBtn, previewBtn)
 storeSettings.row(backToCabinetBtn)
 
+cancelButton = KeyboardButton("◀️Назад")

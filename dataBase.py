@@ -189,9 +189,35 @@ class DB:
         self.connection.commit()
         self.connection.close()
 
+    def getAllCryptosInfo(self):
+        self.connection = sqlite3.connect(self.dbName)
+        self.cursor = self.connection.cursor()
+        self.cursor.execute(f"select * from cryptos")
+        result = self.cursor.fetchall()
+        self.connection.close()
+        return result
+
+    def getCryptoInfoByName(self, name):
+        self.connection = sqlite3.connect(self.dbName)
+        self.cursor = self.connection.cursor()
+        self.cursor.execute(f"select * from cryptos where name = '{name}'")
+        result = self.cursor.fetchone()
+        self.connection.close()
+        return result
+
+    def getGoodInfoById(self, id):
+        self.connection = sqlite3.connect(self.dbName)
+        self.cursor = self.connection.cursor()
+        self.cursor.execute(f"select * from goods where id = {id}")
+        result = self.cursor.fetchone()
+        self.connection.close()
+        return result
 
 # db = DB()
     # print([el[0] for el in db.getAllStoreGoodsByID(546535523)])
+
+# db = DB()
+# print(db.getGoodInfoById(29))
 
 # db = DB()
 # db.createNewCurrency("Mutantcoin", "🦠", 732, "cryptoImg/Mutantcoin.jpg", 462026625)
