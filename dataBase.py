@@ -130,6 +130,10 @@ class DB:
         self.cursor = self.connection.cursor()
         self.cursor.execute(f"insert into transactions (senderId, recieverId, currencyId, fromStore, amount) VALUES ({senderId}, {recieverId}, {currencyId}, {fromStore}, {amount})")
         self.connection.commit()
+        if fromStore:
+            previousAmount = self.cursor.execute(f"select transactionsPerDay from cryptos where id = {currencyId}").fetchone()[0] + 1
+            self.cursor.execute(f"update cryptos set transactionsPerDay = {previousAmount} where id = {currencyId}")
+            self.connection.commit()
         self.connection.close()
 
     def addNewGood(self, id):

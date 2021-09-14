@@ -117,6 +117,7 @@ async def process_setstate_command(message: types.Message):
             for i in range(len(goodsInfo)):
                 info += f"<b>Id:</b> {goodsInfo[i][0]}\n"
                 info += f"<b>Название:</b> {goodsInfo[i][1]}\n"
+                info += f"<b>Цена: </b>{goodsInfo[i][2]}"
                 if i != len(goodsInfo)-1:
                     info += "-----------\n"
                 marketKB.add(KeyboardButton(str(goodsInfo[i][0]) + " | " + str(goodsInfo[i][1])))
