@@ -217,11 +217,22 @@ class DB:
         self.connection.close()
         return result
 
+    def getCryptoCoefficientById(self, id):
+        self.connection = sqlite3.connect(self.dbName)
+        self.cursor = self.connection.cursor()
+        self.cursor.execute(f"select kekPrice from cryptos where id = {id}")
+        result = self.cursor.fetchone()
+        self.connection.close()
+        return result[0]
+
 # db = DB()
     # print([el[0] for el in db.getAllStoreGoodsByID(546535523)])
 
 # db = DB()
 # print(db.getGoodInfoById(29))
+
+# db = DB()
+# print(db.getCryptoCoefficientById(2))
 
 # db = DB()
 # db.createNewCurrency("Mutantcoin", "🦠", 732, "cryptoImg/Mutantcoin.jpg", 462026625)

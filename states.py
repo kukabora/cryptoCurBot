@@ -12,8 +12,10 @@ class States(Helper):
     TEST_STATE_6 = ListItem() #Handles an amount of currency that you want to send
     TEST_STATE_7 = ListItem() #Handles a currency that you want to use when you are buying something
     TEST_STATE_8 = ListItem() #Handles an id of good that user is going to buy
-    TEST_STATE_9 = ListItem() #
-    TEST_STATE_10 = ListItem()
-
+    TEST_STATE_9 = ListItem() #Handles order
+    TEST_STATE_10 = ListItem() #Handles first exchange currency
+    TEST_STATE_11 = ListItem() #Handles second exchange currency
+    TEST_STATE_12 = ListItem() #Handles amount of exchange
+    TEST_STATE_13 = ListItem()  
 
     

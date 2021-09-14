@@ -30,6 +30,108 @@ def makeTransactionBetweenUsers(senderId, recieverId, currencyId, fromStore, amo
 
 TestStates = States()
 ###Хэндлеры состояний
+@dp.message_handler(state=TestStates.all()[13])
+async def process_setstate_command(message: types.Message):
+    state = dp.current_state(user=message.from_user.id)
+    if message.text == "◀️Назад":
+        await state.reset_state()
+        await bot.send_message(chat_id=message.chat.id, text="Возвращаем Вас в главное меню!", reply_markup=ReplyKeyboardRemove())
+        await bot.send_message(chat_id=message.chat.id, text="С чего начнём?", reply_markup=kb.inline_kb2)
+    else:
+        stateData = await state.get_data()
+        if message.text == "✔Да":
+            db.updateWalletAmountOf(db.getCryptoNameById(stateData['currency1']), -float(stateData['amount']), message.from_user.id)
+            db.updateWalletAmountOf(db.getCryptoNameById(stateData['currency2']), float(stateData['newAmount']), message.from_user.id)
+            await state.reset_state()
+            await message.answer(text=f"Вы успешно конвертировали <b>{stateData['amount']} {db.getCryptoNameById(stateData['currency1'])}ов</b> в <b>{stateData['newAmount']} {db.getCryptoNameById(stateData['currency2'])}ов.</b>\n<b><u>Балансы:</u></b>\n{db.getCryptoNameById(stateData['currency1'])}:{db.getCurrentAmountOfCurrencyByUserId(db.getCryptoNameById(stateData['currency1']), message.from_user.id)}\n{db.getCryptoNameById(stateData['currency2'])}:{db.getCurrentAmountOfCurrencyByUserId(db.getCryptoNameById(stateData['currency2']), message.from_user.id)}", parse_mode="html", reply_markup=ReplyKeyboardRemove())
+            await message.answer(text="Чем займемся далее?", reply_markup=kb.inline_kb2)
+        elif message.text == "❌Нет":
+            await state.set_state(TestStates.all()[12])
+            kbd = ReplyKeyboardMarkup().row(KeyboardButton("◀️Назад"))
+            await message.answer(text=f"Введите количество {db.getCryptoNameById(stateData['currency1'])}ов которое вы бы хотели конвертировать в {db.getCryptoNameById(stateData['currency2'])}ы.", reply_markup=kbd)
+        else:
+            await message.answer("У тебя было 3 кнопки и ты все равно решил вписать ответ своими руками. Я в шоке.")
+
+@dp.message_handler(state=TestStates.all()[12])
+async def process_setstate_command(message: types.Message):
+    state = dp.current_state(user=message.from_user.id)
+    if message.text == "◀️Назад":
+        await state.reset_state()
+        await bot.send_message(chat_id=message.chat.id, text="Возвращаем Вас в главное меню!", reply_markup=ReplyKeyboardRemove())
+        await bot.send_message(chat_id=message.chat.id, text="С чего начнём?", reply_markup=kb.inline_kb2)
+    else:
+        if re.match(r'^-?\d+(?:\.\d+)$', message.text) or message.text.isdigit():
+            stateData = await state.get_data()
+            if float(message.text) <= db.getCurrentAmountOfCurrencyByUserId(db.getCryptoNameById(stateData['currency1']), message.from_user.id):
+                await state.update_data(data={"amount":float(message.text)})
+                await state.set_state(TestStates.all()[13])
+
+                kbd = ReplyKeyboardMarkup()
+                kbd.row(KeyboardButton("✔Да"), KeyboardButton("❌Нет"))
+                kbd.row(KeyboardButton("◀️Назад"))
+                
+                acceptableAmount = float(message.text)*(db.getCryptoCoefficientById(stateData['currency2'])/db.getCryptoCoefficientById(stateData['currency1']))
+                await state.update_data(data={'newAmount':acceptableAmount})
+                await message.answer(text=f"При конвертации <b>{message.text}</b> <b>{db.getCryptoNameById(stateData['currency1'])}ов</b> в <b>{db.getCryptoNameById(stateData['currency2'])}ы</b>, вы получите <b><u>{acceptableAmount}</u></b> <b>{db.getCryptoNameById(stateData['currency2'])}ов</b>.\n\nПодтвердить обмен валют?", parse_mode="html", reply_markup=kbd)
+            else:
+                await message.answer(text=f"У вас недостаточно средств для совершения обмена валютами.\n Всего на балансе <b>{db.getCryptoNameById(stateData['currency1'])}ов</b>: {db.getCurrentAmountOfCurrencyByUserId(db.getCryptoNameById(stateData['currency1']), message.from_user.id)}", parse_mode="html")
+        else:
+            await message.answer("Неверное количество.")
+
+
+@dp.message_handler(state=TestStates.all()[11])
+async def process_setstate_command(message: types.Message):
+    state = dp.current_state(user=message.from_user.id)
+    if message.text == "◀️Назад":
+        await state.reset_state()
+        await bot.send_message(chat_id=message.chat.id, text="Возвращаем Вас в главное меню!", reply_markup=ReplyKeyboardRemove())
+        await bot.send_message(chat_id=message.chat.id, text="С чего начнём?", reply_markup=kb.inline_kb2)
+    else:
+        message.text = message.text[1:]
+        if message.text in [coin[0] for coin in db.getAllCtyprosNamesAndEmojis()]:
+            await state.update_data(data={"currency2":db.getCurrencyIdByName(message.text)})
+            stateData = await state.get_data()
+            await state.set_state(TestStates.all()[12])
+            kbd = ReplyKeyboardMarkup().row(KeyboardButton("◀️Назад"))
+            await message.answer(text=f"Введите количество {db.getCryptoNameById(stateData['currency1'])}ов которое вы бы хотели конвертировать в {db.getCryptoNameById(stateData['currency2'])}ы.", reply_markup=kbd)
+        else:
+            await state.set_state(TestStates.all()[12])
+            kbd = ReplyKeyboardMarkup().row(KeyboardButton("◀️Назад"))
+            await message.answer(text=f"Введите количество <b>{db.getCryptoNameById(stateData['currency1'])}ов</b> которое вы бы хотели конвертировать в <b>{db.getCryptoNameById(stateData['currency2'])}ы</b>.", parse_mode="html", reply_markup=kbd)
+            await message.answer(text="Нет валюты с таким названием", reply_markup=kbd)
+            
+
+@dp.message_handler(state=TestStates.all()[10])
+async def process_setstate_command(message: types.Message):
+    state = dp.current_state(user=message.from_user.id)
+    if message.text == "◀️Назад":
+        await state.reset_state()
+        await bot.send_message(chat_id=message.chat.id, text="Возвращаем Вас в главное меню!", reply_markup=ReplyKeyboardRemove())
+        await bot.send_message(chat_id=message.chat.id, text="С чего начнём?", reply_markup=kb.inline_kb2)
+    else:
+        message.text = message.text[1:]
+        if message.text in [coin[0] for coin in db.getAllCtyprosNamesAndEmojis()]:
+            await state.update_data(data={"currency1":db.getCurrencyIdByName(message.text)})
+            stateData = await state.get_data()
+            cryptosInfo = db.getAllCryptosInfo()
+            info = f"На какую бы валюту вы хотели обменять свои {(message.text)}'ы?\n<b><u>ВНИМАНИЕ!!!\nВЫБИРАЙТЕ ТУ ВАЛЮТУ, КОТОРУЮ ВЫ БЫ ХОТЕЛИ ПОЛУЧИТЬ В ПРОЦЕССЕ ОБМЕНА!</u></b>\n\n"
+            exchangeKbd = ReplyKeyboardMarkup()
+            for i in range(len(cryptosInfo)):
+                if cryptosInfo[i][0] == stateData['currency1']:
+                    continue
+                btn = KeyboardButton(f"{cryptosInfo[i][5]}{cryptosInfo[i][1]}")
+                exchangeKbd.row(btn)
+                info += f"<b>Валюта: </b> {cryptosInfo[i][5]}{cryptosInfo[i][1]}\n"
+                info += f"<b>Эквивалент в 1 кекекоине:</b> {cryptosInfo[i][2]} {cryptosInfo[i][1]}'ов\n"
+                if i!=len(cryptosInfo)-1:
+                    info += "--------------\n"
+            exchangeKbd.row(KeyboardButton("◀️Назад"))
+            await state.set_state(TestStates.all()[11])
+            await bot.send_message(chat_id=message.chat.id, text=info, parse_mode="html", reply_markup=exchangeKbd)
+        else:
+            await message.answer(f"Нет криптовалюты с таким названием")
+
+
 @dp.message_handler(state=TestStates.all()[9])
 async def process_setstate_command(message: types.Message):
     state = dp.current_state(user=message.from_user.id)
@@ -406,12 +508,25 @@ async def process_callback_button1(callback_query: types.CallbackQuery):
 @dp.callback_query_handler(lambda c: c.data == 'tradeBtn')
 async def process_callback_button1(callback_query: types.CallbackQuery):
     print(f"User {callback_query.from_user.username} entered exchange section.")
+    state = dp.current_state(user=callback_query.from_user.id)
     try:
         await bot.delete_message(callback_query.message.chat.id, callback_query.message.message_id)
     except:
         pass
     await bot.answer_callback_query(callback_query.id)
-    await bot.send_message(chat_id=callback_query.message.chat.id, text=f"Нинада ломать бота я вижу тебя, {callback_query.from_user.username}", reply_markup=kb.testKB)
+    cryptosInfo = db.getAllCryptosInfo()
+    info = "Какую бы валюту вы хотели обменять?\n<b><u>ВНИМАНИЕ!!!\nВЫБИРАЙТЕ ТУ ВАЛЮТУ, КОТОРУЮ ВЫ БЫ ХОТЕЛИ ОТДАТЬ!</u></b>\n\n"
+    exchangeKbd = ReplyKeyboardMarkup()
+    for i in range(len(cryptosInfo)):
+        btn = KeyboardButton(f"{cryptosInfo[i][5]}{cryptosInfo[i][1]}")
+        exchangeKbd.row(btn)
+        info += f"<b>Валюта: </b> {cryptosInfo[i][5]}{cryptosInfo[i][1]}\n"
+        info += f"<b>Эквивалент в 1 кекекоине:</b> {cryptosInfo[i][2]} {cryptosInfo[i][1]}'ов\n"
+        if i!=len(cryptosInfo)-1:
+            info += "--------------\n"
+    exchangeKbd.row(KeyboardButton("◀️Назад"))
+    await state.set_state(TestStates.all()[10])
+    await bot.send_message(chat_id=callback_query.message.chat.id, text=info, parse_mode="html", reply_markup=exchangeKbd)
 
 @dp.callback_query_handler(lambda c: c.data == 'myToken')
 async def process_callback_button1(callback_query: types.CallbackQuery):
